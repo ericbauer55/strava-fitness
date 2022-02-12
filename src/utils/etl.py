@@ -16,12 +16,18 @@ class RideETL():
         raw_ride_files = [f for f in raw_ride_files if isfile(join(self.config.raw_ride_path, f))] # get only files
 
         # Filter the activity files for only the valid ones
-        raw_ride_files = self.select_valid_rides(raw_ride_files)
+        raw_ride_files = self._select_valid_rides(raw_ride_files)
 
-        print(f'')
+        print(f'Extracting {len(raw_ride_files)} GPX ride files to CSV')
         for ride_file in tqdm(raw_ride_files):
-            # Read the GPX file
+            # Read the Ride's GPX file
             df = read_gpx_to_dataframe(ride_file)
+            # Build the new file name
+            ride_id = get_ride_id(ride_file)
+            new_file_name = join(self.config.extracted_ride_path, (str(ride_id)+'.csv'))
+            # Write the Ride's CSV file
+            df.to_csv(new_file_name, index=False)
 
-    def select_valid_rides(self):
+
+    def _select_valid_rides(self, file_names):
         df_log = pd.read_csv(self.config.activity_log_path)
