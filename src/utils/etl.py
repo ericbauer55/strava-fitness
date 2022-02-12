@@ -11,6 +11,9 @@ class RideETL():
         self.config = Config()
 
     def run_pipeline(self):
+        """
+        This is the high-level interface method to run the ETL pipeline in its correct sequence
+        """
         self.extract_gpx_to_csv()
 
     ############################################################################################
@@ -18,6 +21,9 @@ class RideETL():
     ############################################################################################
 
     def extract_gpx_to_csv(self):
+        """
+        This method converts all valid raw GPX files found in the Config's Raw_Ride_Path into .CSV files
+        """
         # Get the list of raw activity files
         raw_rides_path = self.config.raw_ride_path
         raw_ride_files = listdir(raw_rides_path) # get all files and directories
@@ -37,8 +43,11 @@ class RideETL():
             # Write the Ride's CSV file
             df.to_csv(new_file_name, index=False)
 
-
     def _select_valid_rides(self, file_names):
+        """
+        Given a list of @file_names of potential ride files, this method refers to the processed Activity Log.
+        For all files with ride_id's in the Log, these ride files are retained as valid rides and returned.
+        """
         # Read the list of non-manually uploaded, Ride-type activities
         df_log_valid = pd.read_csv(self.config.activity_log_path)
         df_log_valid = df_log_valid['ride_id'].to_frame() # select only the ride_id column
@@ -53,4 +62,5 @@ class RideETL():
         # Return the list of file names that correspond to valid ride_ids
         valid_file_names = list(df_valid['file_name'].values)
         return valid_file_names
+
 
