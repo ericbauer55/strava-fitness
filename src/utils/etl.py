@@ -21,7 +21,7 @@ class RideETL():
         # Get the list of raw activity files
         raw_rides_path = self.config.raw_ride_path
         raw_ride_files = listdir(raw_rides_path) # get all files and directories
-        raw_ride_files = [f for f in raw_ride_files if isfile(join(raw_rides_path, f))] # get only files
+        raw_ride_files = [f for f in raw_ride_files if isfile(join(raw_rides_path, f)) and f != '.gitignore'] # get only files
 
         # Filter the activity files for only the valid ones
         valid_raw_ride_files = self._select_valid_rides(raw_ride_files)
@@ -40,10 +40,10 @@ class RideETL():
     def _select_valid_rides(self, file_names):
         # Read the list of non-manually uploaded, Ride-type activities
         df_log_valid = pd.read_csv(self.config.activity_log_path)
-        df_log_valid = df_log_valid['ride_id'] # select only the ride_id column
+        df_log_valid = df_log_valid['ride_id'].to_frame() # select only the ride_id column
 
         # Build the @file_names into a dataframe of "ride_id" | "file_name" columns
-        data = [{'ride_id':get_ride_id(ride_file), 'file_name':ride_file} for ride_file in file_names]
+        data = [{'ride_id':int(get_ride_id(ride_file)), 'file_name':ride_file} for ride_file in file_names]
         df_files = pd.DataFrame(data=data)
 
         # Subset the ride_ids that appear in df_log_valid
