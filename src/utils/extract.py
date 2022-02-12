@@ -1,7 +1,13 @@
 import pandas as pd
 import gpxpy as gx
 
-def read_gpx_to_dataframe(file_path):
+def read_gpx_to_dataframe(file_path:str)->pd.DataFrame:
+    """
+    Given a fully qualified @file_path, this function utilizes the gpxpy
+    package to parse the Track Point data from the XML structure.
+
+    This returns a Pandas dataframe of the GPX file
+    """
     # Extract the ride ID from the file_path
     ride_id = get_ride_id(file_path=file_path)
 
@@ -27,14 +33,23 @@ def read_gpx_to_dataframe(file_path):
 
     return df
 
-def get_ride_id(file_path):
+def get_ride_id(file_path:str)->str:
+    """
+    This function extracts the ride ID from a file name and returns it as a string
+    """
     # Extract the ride ID from the file_path
     ride_id = file_path.split('/')[-1] # grab the file name from the path
     ride_id = ride_id.split('.gpx')[0] # grab the ride ID from file name
 
     return ride_id
 
-def read_ride_csv(file_path):
+def read_ride_csv(file_path:str)->pd.DataFrame:
+    """
+    This function loads in a ride's data from .CSV given a file path as a dataframe
+
+    The state of the data (processed vs. enriched) doesn't matter as long
+    as there is a 'time' column for the timestamp
+    """
     # Read in the CSV file for the Ride
     df = pd.read_csv(file_path)
     
