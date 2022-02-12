@@ -1,10 +1,13 @@
 import pandas as pd
-from utils.extract import *
-from utils.config import Config
 from tqdm import tqdm
 from os import listdir
 from os.path import isfile, join
 
+from utils.config import Config
+from utils.extract import *
+from utils.transform.clean import *
+from utils.transform.enrich import *
+from utils.transform.convert import *
 
 class RideETL():
     def __init__(self):
@@ -62,5 +65,9 @@ class RideETL():
         # Return the list of file names that correspond to valid ride_ids
         valid_file_names = list(df_valid['file_name'].values)
         return valid_file_names
+
+    ############################################################################################
+    # TRANSFORM
+    ############################################################################################
 
 
