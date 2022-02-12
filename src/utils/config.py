@@ -1,3 +1,5 @@
+import pandas as pd
+
 class Config():
     def __init__(self):
         pass
@@ -16,3 +18,8 @@ class Config():
     @property
     def enriched_ride_path():
         return '../data/enriched/activities/'
+
+    @staticmethod
+    @property
+    def activity_log_path():
+        return '../data/processed/activity_log.csv'
