@@ -30,4 +30,18 @@ class RideETL():
 
 
     def _select_valid_rides(self, file_names):
-        df_log = pd.read_csv(self.config.activity_log_path)
+        # Read the list of non-manually uploaded, Ride-type activities
+        df_log_valid = pd.read_csv(self.config.activity_log_path)
+        df_log_valid = df_log_valid['ride_id'] # select only the ride_id column
+
+        # Build the @file_names into a dataframe of "ride_id" | "file_name" columns
+        data = [{'ride_id':get_ride_id(ride_file), 'file_name':ride_file} for ride_file in file_names]
+        df_files = pd.DataFrame(data=data)
+
+        # Subset the ride_ids that appear in df_log_valid
+        df_valid = df_log_valid.merge(df_files, on='ride_id', how='inner')
+
+        # Return the list of file names that correspond to valid ride_ids
+        valid_file_names = list(df_valid['file_name'].values)
+        return valid_file_names
+
