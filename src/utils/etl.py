@@ -10,6 +10,13 @@ class RideETL():
     def __init__(self):
         self.config = Config()
 
+    def run_pipeline(self):
+        self.extract_gpx_to_csv()
+
+    ############################################################################################
+    # EXTRACT
+    ############################################################################################
+
     def extract_gpx_to_csv(self):
         # Get the list of raw activity files
         raw_ride_files = listdir(self.config.raw_ride_path) # get all files and directories
