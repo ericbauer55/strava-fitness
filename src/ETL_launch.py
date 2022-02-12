@@ -1,7 +1,7 @@
 import pandas as pd
 from tqdm import tqdm
-from utils.extract import *
-import os
+from utils.etl import *
 
 if __name__ == '__main__':
-    print('Hello World')
+    ride_etl_pipeline = RideETL()
+    ride_etl_pipeline.run_pipeline()
