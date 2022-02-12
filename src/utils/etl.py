@@ -19,8 +19,9 @@ class RideETL():
 
     def extract_gpx_to_csv(self):
         # Get the list of raw activity files
-        raw_ride_files = listdir(self.config.raw_ride_path) # get all files and directories
-        raw_ride_files = [f for f in raw_ride_files if isfile(join(self.config.raw_ride_path, f))] # get only files
+        raw_rides_path = self.config.raw_ride_path
+        raw_ride_files = listdir(raw_rides_path) # get all files and directories
+        raw_ride_files = [f for f in raw_ride_files if isfile(join(raw_rides_path, f))] # get only files
 
         # Filter the activity files for only the valid ones
         valid_raw_ride_files = self._select_valid_rides(raw_ride_files)

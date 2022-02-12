@@ -4,22 +4,18 @@ class Config():
     def __init__(self):
         pass
 
-    @staticmethod
     @property
-    def raw_ride_path():
+    def raw_ride_path(self):
         return '../data/raw/activities/'
 
-    @staticmethod
     @property
-    def extracted_ride_path():
+    def extracted_ride_path(self):
         return '../data/processed/activities/'
 
-    @staticmethod
     @property
-    def enriched_ride_path():
+    def enriched_ride_path(self):
         return '../data/enriched/activities/'
 
-    @staticmethod
     @property
-    def activity_log_path():
+    def activity_log_path(self):
         return '../data/processed/activity_log.csv'
