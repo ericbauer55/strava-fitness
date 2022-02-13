@@ -29,13 +29,42 @@ class BasicEnricher():
         self.df = df
     
     def run(self):
-        pass
+        self._get_delta_distance()
+        self._get_heading()
+        self._get_speed()
+        self._get_is_cruising()
+        self._convert_elevation_units()
+        self._get_terrain_grade()
+        self._get_elevation_changes()
+        self._get_training_window_id()
 
     ################################################################
     # PROCESS METHODS
     ################################################################
 
+    def _get_delta_distance(self):
+        pass
 
+    def _get_heading(self):
+        pass
+
+    def _get_speed(self):
+        pass
+
+    def _get_is_cruising(self):
+        pass
+
+    def _convert_elevation_units(self):
+        pass
+
+    def _get_terrain_grade(self):
+        pass
+
+    def _get_elevation_changes(self):
+        pass
+
+    def _get_training_window_id(self):
+        pass
 
     ################################################################
     # HELPER METHODS
