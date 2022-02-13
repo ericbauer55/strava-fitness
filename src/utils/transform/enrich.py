@@ -41,7 +41,7 @@ class PowerEstimator():
 
     def _get_instantaneous_power(self):
         df = self.df.copy()
-        params = self.params
+        params = self.calc_params
 
         # add a total_mass parameter based on the ride_id and activity log
         ride_id = 0

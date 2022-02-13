@@ -94,28 +94,6 @@ class RideETL():
 
     def estimate_ride_power(self):
         # Define the process function
-        privacy_zones_file_path = self.config.privacy_zone_path
-        def process_protect_privacy(df, privacy_zone_path=privacy_zones_file_path):
-            protector = PrivacyZoner(df=df, privacy_zone_path=privacy_zone_path)
-            protector.run()
-
-            return protector.df
-
-        # Define the details of the process
-        process_details_dict = {'process_func': process_protect_privacy,
-                                'extract_func': read_ride_csv,
-                                'input_path': self.config.enriched_ride_path,
-                                'output_path': self.config.cleaned_ride_path,
-                                'filter_valid': False,
-                                'description_template': 'Removing sensitive location PII on {} CSV ride files'
-                                } 
-
-        self.apply_process(process_details_dict=process_details_dict)
-
-    ### PRIVACY
-
-    def protect_privacy_zones(self):
-        # Define the process function
         calc_params = self.config.power_estimation_params
         log_path = self.config.activity_log_path
         def process_estimate_power(df, calc_params=calc_params, activity_log_path=log_path):
@@ -134,6 +112,29 @@ class RideETL():
                                 } 
 
         self.apply_process(process_details_dict=process_details_dict)
+
+    ### PRIVACY
+
+    def protect_privacy_zones(self):
+        # Define the process function
+        privacy_zones_file_path = self.config.privacy_zone_path
+        def process_protect_privacy(df, privacy_zone_path=privacy_zones_file_path):
+            protector = PrivacyZoner(df=df, privacy_zone_path=privacy_zone_path)
+            protector.run()
+
+            return protector.df
+
+        # Define the details of the process
+        process_details_dict = {'process_func': process_protect_privacy,
+                                'extract_func': read_ride_csv,
+                                'input_path': self.config.enriched_ride_path,
+                                'output_path': self.config.cleaned_ride_path,
+                                'filter_valid': False,
+                                'description_template': 'Removing sensitive location PII on {} CSV ride files'
+                                } 
+
+        self.apply_process(process_details_dict=process_details_dict)
+
 
     ### CLEANING
 
