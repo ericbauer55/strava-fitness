@@ -95,7 +95,7 @@ class RideETL():
             normalizer = TimeNormalizer(df=df, time_gap_threshold=self.config.time_gap_threshold)
             normalizer.run()
 
-            df = normalizer.df
+            df = normalizer.df_upsampled
 
             # Build the new file name for ENRICHED data
             ride_id = get_ride_id(ride_file)
