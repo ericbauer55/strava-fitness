@@ -25,6 +25,11 @@ class Config():
         return join(self.root_dir, 'data/processed/activity_log.csv')
 
     @property
+    def privacy_zone_path(self):
+        # NOTE: this directory is in .gitignore
+        return join(self.root_dir, 'data/cleaned/privacy/privacy_zones.csv')
+
+    @property
     def time_gap_threshold(self):
         # This is the number of seconds to create a new segment_id if delta_time >= threshold
         return 15 # seconds
