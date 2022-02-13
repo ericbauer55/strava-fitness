@@ -21,8 +21,17 @@ class Config():
         return join(self.root_dir, 'data/enriched/activities/')
 
     @property
+    def cleaned_ride_path(self):
+        return join(self.root_dir, 'data/cleaned/activities/')
+
+    @property
     def activity_log_path(self):
         return join(self.root_dir, 'data/processed/activity_log.csv')
+
+    @property
+    def privacy_zone_path(self):
+        # NOTE: this directory is in .gitignore
+        return join(self.root_dir, 'data/cleaned/privacy/privacy_zones.csv')
 
     @property
     def time_gap_threshold(self):

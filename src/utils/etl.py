@@ -18,9 +18,10 @@ class RideETL():
         """
         This is the high-level interface method to run the ETL pipeline in its correct sequence
         """
-        self.extract_gpx_to_csv()
-        self.normalize_time_sampling()
-        self.basic_enrichment()
+        #self.extract_gpx_to_csv()
+        #self.normalize_time_sampling()
+        #self.basic_enrichment()
+        self.protect_privacy_zones()
 
     ############################################################################################
     # EXTRACT
@@ -85,6 +86,28 @@ class RideETL():
                                 'output_path': self.config.enriched_ride_path,
                                 'filter_valid': False,
                                 'description_template': 'Performing basic enrichments on {} CSV ride files'
+                                } 
+
+        self.apply_process(process_details_dict=process_details_dict)
+
+    ### PRIVACY
+
+    def protect_privacy_zones(self):
+        # Define the process function
+        privacy_zones_file_path = self.config.privacy_zone_path
+        def process_protect_privacy(df, privacy_zone_path=privacy_zones_file_path):
+            protector = PrivacyZoner(df=df, privacy_zone_path=privacy_zone_path)
+            protector.run()
+
+            return protector.df
+
+        # Define the details of the process
+        process_details_dict = {'process_func': process_protect_privacy,
+                                'extract_func': read_ride_csv,
+                                'input_path': self.config.enriched_ride_path,
+                                'output_path': self.config.cleaned_ride_path,
+                                'filter_valid': False,
+                                'description_template': 'Removing sensitive location PII on {} CSV ride files'
                                 } 
 
         self.apply_process(process_details_dict=process_details_dict)
