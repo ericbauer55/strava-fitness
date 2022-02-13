@@ -9,6 +9,7 @@ class TimeNormalizer():
         self.time_gap_threshold = time_gap_threshold
 
     def run(self):
+        self._guarantee_unique_timestamps()
         self.df = create_delta_time(self.df, time_column='time', fill_first=1)
         self.df = create_duration_column(self.df, duration_column_name='elapsed_time')
         self._define_segment_ids()
@@ -19,6 +20,13 @@ class TimeNormalizer():
     ################################################################
     # PROCESS METHODS
     ################################################################
+
+    def _guarantee_unique_timestamps(self):
+        # Guarantee that there is only 1 row for each timestamp
+        # Not doing this can cause ValueErrors from duplicate time index assignments
+        # Timestamps that are equal might also mess with calculations that
+        # utilize delta_time 
+        self.df = self.df.drop_duplicates(subset=['time'], keep='first')
 
     def _define_segment_ids(self):
         # get the time gap indices
@@ -67,5 +75,6 @@ class TimeNormalizer():
     def upsample_and_interpolate(df, time_column='time', method='linear', limit_direction='forward'):
         # set the timestamp as the index for the dataframe
         df = df.set_index(time_column).copy()
-        df = df.resample('S').interpolate(method=method, limit_direction=limit_direction).reset_index()
-        return df
+        df_upsampled = df.resample('S').interpolate(method=method, limit_direction=limit_direction).reset_index()
+        
+        return df_upsampled
