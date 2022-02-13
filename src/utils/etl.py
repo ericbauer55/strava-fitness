@@ -1,10 +1,14 @@
 import pandas as pd
-from utils.extract import *
-from utils.config import Config
 from tqdm import tqdm
 from os import listdir
 from os.path import isfile, join
 
+from utils.config import Config
+from utils.extract import *
+from utils.transform.clean import *
+from utils.transform.enrich import *
+from utils.transform.convert import *
+from utils.transform.normalize import *
 
 class RideETL():
     def __init__(self):
@@ -15,6 +19,7 @@ class RideETL():
         This is the high-level interface method to run the ETL pipeline in its correct sequence
         """
         self.extract_gpx_to_csv()
+        self.normalize_time_sampling()
 
     ############################################################################################
     # EXTRACT
@@ -37,9 +42,11 @@ class RideETL():
         for ride_file in tqdm(valid_raw_ride_files):
             # Read the Ride's GPX file
             df = read_gpx_to_dataframe(ride_file)
-            # Build the new file name
+
+            # Build the new file name for PROCESSED data
             ride_id = get_ride_id(ride_file)
             new_file_name = join(self.config.extracted_ride_path, (str(ride_id)+'.csv'))
+
             # Write the Ride's CSV file
             df.to_csv(new_file_name, index=False)
 
@@ -63,4 +70,36 @@ class RideETL():
         valid_file_names = list(df_valid['file_name'].values)
         return valid_file_names
 
+    ############################################################################################
+    # TRANSFORM
+    ############################################################################################
 
+    ### NORMALIZATION
+
+    def normalize_time_sampling(self):
+        # Get the list of extracted activity files as .csv's
+        extracted_rides_path = self.config.extracted_ride_path
+        extracted_ride_files = listdir(extracted_rides_path) # get all files and directories
+        extracted_ride_files = [join(extracted_rides_path, f) for f in extracted_ride_files if f != '.gitignore'] # add full paths to files
+        extracted_ride_files = [f for f in extracted_ride_files if isfile(f)] # get only files, no directories
+
+        # There is no need to filter for valid ride_id's since this is taken care of by `extract_gpx_to_csv`
+
+        print('-'*100)
+        print(f'Normalizing the time sampling for {len(extracted_ride_files)} CSV ride files')
+        for ride_file in tqdm(extracted_ride_files):
+            # Read the Ride's CSV file
+            df = read_ride_csv(ride_file)
+
+            # Run the data through the normalization process
+            normalizer = TimeNormalizer(df=df, time_gap_threshold=self.config.time_gap_threshold)
+            normalizer.run()
+
+            df = normalizer.df_upsampled
+
+            # Build the new file name for ENRICHED data
+            ride_id = get_ride_id(ride_file)
+            new_file_name = join(self.config.enriched_ride_path, (str(ride_id)+'.csv'))
+
+            # Write the Ride's CSV file
+            df.to_csv(new_file_name, index=False)

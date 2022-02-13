@@ -23,3 +23,8 @@ class Config():
     @property
     def activity_log_path(self):
         return join(self.root_dir, 'data/processed/activity_log.csv')
+
+    @property
+    def time_gap_threshold(self):
+        # This is the number of seconds to create a new segment_id if delta_time >= threshold
+        return 15 # seconds
