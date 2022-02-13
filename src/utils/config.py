@@ -21,6 +21,10 @@ class Config():
         return join(self.root_dir, 'data/enriched/activities/')
 
     @property
+    def cleaned_ride_path(self):
+        return join(self.root_dir, 'data/cleaned/activities/')
+
+    @property
     def activity_log_path(self):
         return join(self.root_dir, 'data/processed/activity_log.csv')
 
