@@ -44,7 +44,7 @@ class PowerEstimator():
         params = self.calc_params
 
         # add a total_mass parameter based on the ride_id and activity log
-        ride_id = 0
+        ride_id = df.loc[0,'ride_id']
         params['total_mass'] = params['rider_mass'] + self._get_bike_weight(ride_id=ride_id)
         
         # Convert the terrain slope into radians
