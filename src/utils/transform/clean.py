@@ -23,7 +23,7 @@ class PrivacyZoner():
         self.df_privacy = pd.read_csv(self.privacy_zone_path)
 
     def _calculate_proximities(self):
-        for address_k in self.df_privacy.shape[0]:
+        for address_k in range(self.df_privacy.shape[0]):
             # get the relevant parameters
             dist_name = 'prox_' + self.df_privacy.loc[address_k, 'name']
             latitude = self.df_privacy.loc[address_k, 'latitude']
@@ -34,7 +34,7 @@ class PrivacyZoner():
             self.temporary_prox_columns.append(dist_name)
 
     def _remove_violation_gps_data(self):
-        for address_k in self.df_privacy.shape[0]:
+        for address_k in range(self.df_privacy.shape[0]):
              # get the relevant parameters
             dist_name = 'prox_' + self.df_privacy.loc[address_k, 'name']
             privacy_radius = self.df_privacy.loc[address_k, 'privacy_radius']
