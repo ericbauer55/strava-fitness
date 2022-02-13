@@ -18,8 +18,9 @@ class RideETL():
         """
         This is the high-level interface method to run the ETL pipeline in its correct sequence
         """
-        self.extract_gpx_to_csv()
-        self.normalize_time_sampling()
+        #self.extract_gpx_to_csv()
+        #self.normalize_time_sampling()
+        self.basic_enrichment()
 
     ############################################################################################
     # EXTRACT
@@ -63,6 +64,27 @@ class RideETL():
                                 'output_path': self.config.enriched_ride_path,
                                 'filter_valid': False,
                                 'description_template': 'Normalizing the time sampling for {} CSV ride files'
+                                } 
+
+        self.apply_process(process_details_dict=process_details_dict)
+
+    ### ENRICHMENT
+
+    def basic_enrichment(self):
+        # Define the process function
+        def process_basic_enrichment(df):
+            enricher = BasicEnricher(df=df)
+            enricher.run()
+
+            return enricher.df
+
+        # Define the details of the process
+        process_details_dict = {'process_func': process_basic_enrichment,
+                                'extract_func': read_ride_csv,
+                                'input_path': self.config.enriched_ride_path,
+                                'output_path': self.config.enriched_ride_path,
+                                'filter_valid': False,
+                                'description_template': 'Performing basic enrichments on {} CSV ride files'
                                 } 
 
         self.apply_process(process_details_dict=process_details_dict)
