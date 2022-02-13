@@ -1,4 +1,8 @@
 import pandas as pd
+from haversine import haversine
+
+from utils.pandaswindow import PandasWindow
+
 
 def create_delta_time(df, time_column='time', fill_first=1.0):
     df = df.copy()
@@ -19,3 +23,21 @@ def create_delta_time(df, time_column='time', fill_first=1.0):
 def create_duration_column(df, duration_column_name):
     df[duration_column_name] = df['delta_time'].cumsum()
     return df
+
+class BasicEnricher():
+    def __init__(self, df):
+        self.df = df
+    
+    def run(self):
+        pass
+
+    ################################################################
+    # PROCESS METHODS
+    ################################################################
+
+
+
+    ################################################################
+    # HELPER METHODS
+    ################################################################
+
