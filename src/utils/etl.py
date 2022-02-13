@@ -77,32 +77,24 @@ class RideETL():
     ### NORMALIZATION
 
     def normalize_time_sampling(self):
-        # Get the list of extracted activity files as .csv's
-        extracted_rides_path = self.config.extracted_ride_path
-        extracted_ride_files = listdir(extracted_rides_path) # get all files and directories
-        extracted_ride_files = [join(extracted_rides_path, f) for f in extracted_ride_files if f != '.gitignore'] # add full paths to files
-        extracted_ride_files = [f for f in extracted_ride_files if isfile(f)] # get only files, no directories
-
-        # There is no need to filter for valid ride_id's since this is taken care of by `extract_gpx_to_csv`
-
-        print('-'*100)
-        print(f'Normalizing the time sampling for {len(extracted_ride_files)} CSV ride files')
-        for ride_file in tqdm(extracted_ride_files):
-            # Read the Ride's CSV file
-            df = read_ride_csv(ride_file)
-
-            # Run the data through the normalization process
-            normalizer = TimeNormalizer(df=df, time_gap_threshold=self.config.time_gap_threshold)
+        # Define the process function
+        threshold = self.config.time_gap_threshold
+        def process_normalize_time(df, time_gap_threshold=threshold):
+            normalizer = TimeNormalizer(df=df, time_gap_threshold=time_gap_threshold)
             normalizer.run()
 
-            df = normalizer.df_upsampled
+            return normalizer.df_upsampled
 
-            # Build the new file name for ENRICHED data
-            ride_id = get_ride_id(ride_file)
-            new_file_name = join(self.config.enriched_ride_path, (str(ride_id)+'.csv'))
+        # Define the details of the process
+        process_details_dict = {'process_func': process_normalize_time,
+                                'extract_func': read_ride_csv,
+                                'input_path': self.config.extracted_ride_path,
+                                'output_path': self.config.enriched_ride_path,
+                                'filter_valid': False,
+                                'description_template': 'Normalizing the time sampling for {} CSV ride files'
+                                } 
 
-            # Write the Ride's CSV file
-            df.to_csv(new_file_name, index=False)
+        self.apply_process(process_details_dict=process_details_dict)
 
     ############################################################################################
     # HELPERS
@@ -141,7 +133,7 @@ class RideETL():
             # Apply the Process (if any specified)
             process = process_details_dict['process_func']
             if process is not None:
-                df = process(ride_file)
+                df = process(df)
 
             # Build the new file name for PROCESSED data
             ride_id = get_ride_id(ride_file)
