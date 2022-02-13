@@ -103,3 +103,49 @@ class RideETL():
 
             # Write the Ride's CSV file
             df.to_csv(new_file_name, index=False)
+
+    ############################################################################################
+    # HELPERS
+    ############################################################################################
+
+    def apply_process(self, process_details_dict):
+        """
+        process_details_dict = {'process_func': function object for specific process to run,
+                                'extract_func': function object for the extraction step
+                                'input_path': input path to extract from
+                                'output_path': output path to load to
+                                'filter_valid': True/False of whether to use _select_valid_rides
+                                'description_template': string template to fill out and print when running
+                                }
+        """
+        # Get the list of activity files
+        input_rides_path = process_details_dict['input_path']
+        ride_files = listdir(input_rides_path) # get all files and directories
+        ride_files = [join(input_rides_path, f) for f in ride_files if f != '.gitignore'] # add full paths to files
+        ride_files = [f for f in ride_files if isfile(f)] # get only files, no directories
+
+        # Filter the activity files for only the valid ones
+        if process_details_dict['filter_valid'] == True:
+            ride_files = self._select_valid_rides(ride_files)
+
+        # Print Process Description
+        print('-'*100)
+        process_description = process_details_dict['description_template'].format(len(ride_files))
+        print(process_description)
+
+        # Run the Process over each Ride File
+        for ride_file in tqdm(ride_files):
+            # Read the Ride File
+            df = process_details_dict['extract_func'](ride_file)
+
+            # Apply the Process (if any specified)
+            process = process_details_dict['process_func']
+            if process is not None:
+                df = process(ride_file)
+
+            # Build the new file name for PROCESSED data
+            ride_id = get_ride_id(ride_file)
+            new_file_name = join(process_details_dict['output_path'], (str(ride_id)+'.csv'))
+
+            # Write the Ride's CSV file
+            df.to_csv(new_file_name, index=False)
