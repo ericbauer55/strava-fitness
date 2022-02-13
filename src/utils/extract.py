@@ -24,7 +24,7 @@ def read_gpx_to_dataframe(file_path:str)->pd.DataFrame:
             for j, segment in enumerate(track.segments):
                 for point in segment.points:
                     # create the row of data & append to data
-                    row = {'track':ride_id, 'segment_id':j, 'time':point.time, 
+                    row = {'ride_id':ride_id, 'segment_id':j, 'time':point.time, 
                         'elevation':point.elevation, 'latitude':point.latitude, 'longitude':point.longitude}
                     data.append(row)
     
