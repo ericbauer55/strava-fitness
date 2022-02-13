@@ -27,9 +27,10 @@ def create_duration_column(df, duration_column_name):
     return df
 
 class PowerEstimator():
-    def __init__(self, df, calc_params):
+    def __init__(self, df, calc_params, activity_log_path):
         self.df = df
         self.calc_params = calc_params
+        self.activity_log_path = activity_log_path
     
     def run(self):
         self._get_instantaneous_power()
@@ -41,8 +42,10 @@ class PowerEstimator():
     def _get_instantaneous_power(self):
         df = self.df.copy()
         params = self.params
-        cols_to_drop_later = ['filt_grade_radians','filt_speed_MpS','F_grav','F_fric','F_drag', 'F_sum', 
-                            'total_speed', 'wind_velocity_component']
+
+        # add a total_mass parameter based on the ride_id and activity log
+        ride_id = 0
+        params['total_mass'] = params['rider_mass'] + self._get_bike_weight(ride_id=ride_id)
         
         # Convert the terrain slope into radians
         df['filt_grade_radians'] = np.arctan(df['filt_grade']/100)
@@ -69,7 +72,9 @@ class PowerEstimator():
         df.loc[df['inst_power']<0,'inst_power'] = 0 # coasting when sum of forces is negative (no input power)
         
         # drop the temporary columns
-        df.drop(cols_to_drop_later, axis=1, inplace=True)
+        cols_to_drop = ['filt_grade_radians','filt_speed_MpS','F_grav','F_fric','F_drag', 'F_sum', 
+                            'total_speed', 'wind_velocity_component']
+        df.drop(cols_to_drop, axis=1, inplace=True)
 
         self.df = df
     
@@ -84,6 +89,14 @@ class PowerEstimator():
         df = df.copy()
         df['wind_velocity_component'] = 0 # constant zero for now
         return df
+
+    def _get_bike_weight(self, ride_id):
+        # open the activity log to look up the bike weight
+        df_log = pd.read_csv(self.activity_log_path)
+        # find the bike weight for the ride
+        df_log = df_log.set_index('ride_id')
+        bike_weight = df_log.loc[ride_id, 'bike_weight']
+        return bike_weight
 
 
 
