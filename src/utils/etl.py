@@ -18,8 +18,8 @@ class RideETL():
         """
         This is the high-level interface method to run the ETL pipeline in its correct sequence
         """
-        #self.extract_gpx_to_csv()
-        #self.normalize_time_sampling()
+        self.extract_gpx_to_csv()
+        self.normalize_time_sampling()
         self.basic_enrichment()
 
     ############################################################################################
