@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from haversine import haversine
 
 class PrivacyZoner():
@@ -38,8 +39,10 @@ class PrivacyZoner():
             dist_name = 'prox_' + self.df_privacy.loc[address_k, 'name']
             privacy_radius = self.df_privacy.loc[address_k, 'privacy_radius']
 
-            
-    
+            filt_violation = self.df.loc[:,dist_name] <= privacy_radius
+            self.df.loc[filt_violation, 'latitude'] = np.nan
+            self.df.loc[filt_violation, 'longitude'] = np.nan
+
     def _drop_temporary_prox_columns(self):
         self.df.drop(self.temporary_prox_columns, axis=1, inplace=True)
 
