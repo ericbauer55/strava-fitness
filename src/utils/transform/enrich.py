@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from haversine import haversine
+import datetime as dt
 
 from utils.pandaswindow import PandasWindow
 
@@ -72,8 +73,22 @@ class BasicEnricher():
     def _get_elevation_changes(self):
         self.df = self.compute_cumulative_elevation_changes(df=self.df)
 
-    def _get_training_window_id(self):
-        pass
+    def _get_training_window_id(self, training_period=8):
+        # Initialize the start date and iteration steps of the training periods
+        start = dt.datetime(year=2020, month=1, day=2)
+        window_period = dt.timedelta(weeks=training_period)
+        
+        # Generate a dataframe containing window IDs and their start dates
+        data = [{'training_window_id':i, 'start_date':start+window_period*i} for i in range(0,13)]
+        df_training_dates = pd.DataFrame(data=data)
+        df_training_dates['start_date'] = pd.to_datetime(df_training_dates['start_date']) # make datetime for pandas
+        df_training_dates = df_training_dates.set_index('start_date').tz_localize('UTC').sort_index().reset_index() # add TZ for merge
+
+        # Find the window ID via merge_asof
+        df_temp = pd.merge_asof(self.df[['time']], df_training_dates, left_on='time', right_on='start_date')
+
+        # Assign the window ID back into the core dataframe
+        self.df['training_window_id'] = df_temp['training_window_id']
 
     ################################################################
     # HELPER METHODS
