@@ -1,6 +1,81 @@
+from os import stat
 import pandas as pd
 import numpy as np
 from haversine import haversine
+from scipy import signal
+
+from utils.pandaswindow import PandasWindow
+
+class SignalFilter():
+    def __init__(self, df):
+        self.df = df
+
+    def run(self):
+        self._filter_speed_signal()
+        self._filter_grade_signal()
+
+    ################################################################
+    # PROCESS METHODS
+    ################################################################
+
+    def _filter_speed_signal(self):
+        # Apply the is_cruising check over segment windows
+        window = PandasWindow(partition_by='segment_id', order_by='time')
+        self.df = window.apply_func(df=self.df, func=self.backfill_speed)
+        self.df = window.apply_func(df=self.df, func=self.apply_hann_filter_to_speed)
+
+    def _filter_grade_signal(self):
+        # Apply the is_cruising check over segment windows
+        window = PandasWindow(partition_by='segment_id', order_by='time')
+        self.df = window.apply_func(df=self.df, func=self.backfill_grade)
+        self.df = window.apply_func(df=self.df, func=self.apply_hann_filter_to_grade)
+
+    ################################################################
+    # HELPER METHODS
+    ################################################################
+
+    @staticmethod
+    def backfill_speed(df):
+        df = df.copy()
+        df['speed'] = df['speed'].interpolate(method='backfill')
+        return df
+    
+    @staticmethod
+    def backfill_grade(df):
+        df = df.copy()
+        df['grade'] = df['grade'].interpolate(method='backfill')
+        return df
+
+    @staticmethod
+    def apply_hann_filter_to_speed(df, signal_column='speed', window_order=10):
+        df = df.copy()
+        signal_list = list(df[signal_column].values)
+        win = signal.windows.hann(window_order)
+        filtered_signal = signal.convolve(signal_list, win, mode='same') / sum(win)
+        
+        df['filt_'+signal_column] = np.nan
+        if len(signal_list) == len(filtered_signal):
+            df['filt_'+signal_column] = filtered_signal
+        else:
+            df.loc[1:,'filt_'+signal_column] = filtered_signal
+            df.loc[0,'filt_'+signal_column] = df.loc[1,'filt_'+signal_column] # backfill
+        return df
+
+    @staticmethod
+    def apply_hann_filter_to_grade(df, signal_column='grade', window_order=10):
+        signal_list = list(df[signal_column].values)
+        win = signal.windows.hann(window_order)
+        filtered_signal = signal.convolve(signal_list, win, mode='same') / sum(win)
+        
+        df['filt_'+signal_column] = np.nan
+        if len(signal_list) == len(filtered_signal):
+            df['filt_'+signal_column] = filtered_signal
+        else:
+            df.loc[1:,'filt_'+signal_column] = filtered_signal
+            df.loc[0,'filt_'+signal_column] = df.loc[1,'filt_'+signal_column] # backfill
+        return df
+
+
 
 class PrivacyZoner():
     def __init__(self, df, privacy_zone_path):

@@ -18,10 +18,11 @@ class RideETL():
         """
         This is the high-level interface method to run the ETL pipeline in its correct sequence
         """
-        #self.extract_gpx_to_csv()
-        #self.normalize_time_sampling()
-        #self.basic_enrichment()
+        self.extract_gpx_to_csv()
+        self.normalize_time_sampling()
+        self.basic_enrichment()
         self.protect_privacy_zones()
+        self.filter_noise()
 
     ############################################################################################
     # EXTRACT
@@ -108,6 +109,27 @@ class RideETL():
                                 'output_path': self.config.cleaned_ride_path,
                                 'filter_valid': False,
                                 'description_template': 'Removing sensitive location PII on {} CSV ride files'
+                                } 
+
+        self.apply_process(process_details_dict=process_details_dict)
+
+    ### CLEANING
+
+    def filter_noise(self):
+        # Define the process function
+        def process_filter_noise(df):
+            filterer = SignalFilter(df=df)
+            filterer.run()
+
+            return filterer.df
+
+        # Define the details of the process
+        process_details_dict = {'process_func': process_filter_noise,
+                                'extract_func': read_ride_csv,
+                                'input_path': self.config.cleaned_ride_path,
+                                'output_path': self.config.cleaned_ride_path,
+                                'filter_valid': False,
+                                'description_template': 'Filtering noisy speed and grade on {} CSV ride files'
                                 } 
 
         self.apply_process(process_details_dict=process_details_dict)
