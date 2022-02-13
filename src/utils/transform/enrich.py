@@ -147,7 +147,7 @@ class BasicEnricher():
 
     @staticmethod
     def check_is_cruising(df, upper_threshold=8, lower_threshold=5):
-        df = df.copy()
+        df = df.copy().reset_index()
         
         df['is_cruising'] = False
         
