@@ -26,6 +26,28 @@ def create_duration_column(df, duration_column_name):
     df[duration_column_name] = df['delta_time'].cumsum()
     return df
 
+class PowerEstimator():
+    def __init__(self, df, calc_params):
+        self.df = df
+        self.calc_params = calc_params
+    
+    def run(self):
+        pass
+
+    ################################################################
+    # PROCESS METHODS
+    ################################################################
+
+    
+
+    ################################################################
+    # HELPER METHODS
+    ################################################################
+
+
+
+
+
 class BasicEnricher():
     def __init__(self, df):
         self.df = df
