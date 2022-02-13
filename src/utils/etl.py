@@ -18,11 +18,12 @@ class RideETL():
         """
         This is the high-level interface method to run the ETL pipeline in its correct sequence
         """
-        self.extract_gpx_to_csv()
-        self.normalize_time_sampling()
-        self.basic_enrichment()
-        self.protect_privacy_zones()
-        self.filter_noise()
+        #self.extract_gpx_to_csv()
+        #self.normalize_time_sampling()
+        #self.basic_enrichment()
+        #self.protect_privacy_zones()
+        #self.filter_noise()
+        self.estimate_ride_power()
 
     ############################################################################################
     # EXTRACT
@@ -91,6 +92,27 @@ class RideETL():
 
         self.apply_process(process_details_dict=process_details_dict)
 
+    def estimate_ride_power(self):
+        # Define the process function
+        calc_params = self.config.power_estimation_params
+        log_path = self.config.activity_log_path
+        def process_estimate_power(df, calc_params=calc_params, activity_log_path=log_path):
+            estimator = PowerEstimator(df=df, calc_params=calc_params, activity_log_path=activity_log_path)
+            estimator.run()
+
+            return estimator.df
+
+        # Define the details of the process
+        process_details_dict = {'process_func': process_estimate_power,
+                                'extract_func': read_ride_csv,
+                                'input_path': self.config.cleaned_ride_path,
+                                'output_path': self.config.cleaned_ride_path,
+                                'filter_valid': False,
+                                'description_template': 'Estimating ride power for {} CSV ride files'
+                                } 
+
+        self.apply_process(process_details_dict=process_details_dict)
+
     ### PRIVACY
 
     def protect_privacy_zones(self):
@@ -112,6 +134,7 @@ class RideETL():
                                 } 
 
         self.apply_process(process_details_dict=process_details_dict)
+
 
     ### CLEANING
 

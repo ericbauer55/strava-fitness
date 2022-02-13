@@ -37,3 +37,15 @@ class Config():
     def time_gap_threshold(self):
         # This is the number of seconds to create a new segment_id if delta_time >= threshold
         return 15 # seconds
+
+    @property
+    def power_estimation_params(self):
+        params = {'rider_mass': 86.1826, # kg
+                  'area': 0.4635862, # m^2
+                  'mu_rr': 0.005, # coefficient of rolling friction
+                  'c_drag': 0.95, # coefficient of drag
+                  'rho_air': 1.2, # kg/m^3 air density
+                  'eta_dt': 0.96, # efficiency of drive train
+                  'gravity': 9.8 # m/s^2
+                 }
+        return params # seconds

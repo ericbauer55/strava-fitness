@@ -26,6 +26,80 @@ def create_duration_column(df, duration_column_name):
     df[duration_column_name] = df['delta_time'].cumsum()
     return df
 
+class PowerEstimator():
+    def __init__(self, df, calc_params, activity_log_path):
+        self.df = df
+        self.calc_params = calc_params
+        self.activity_log_path = activity_log_path
+    
+    def run(self):
+        self._get_instantaneous_power()
+
+    ################################################################
+    # PROCESS METHODS
+    ################################################################
+
+    def _get_instantaneous_power(self):
+        df = self.df.copy()
+        params = self.calc_params
+
+        # add a total_mass parameter based on the ride_id and activity log
+        ride_id = df.loc[0,'ride_id']
+        params['total_mass'] = params['rider_mass'] + self._get_bike_weight(ride_id=ride_id)
+        
+        # Convert the terrain slope into radians
+        df['filt_grade_radians'] = np.arctan(df['filt_grade']/100)
+        
+        # Convert the speed units into meters per second
+        mph2MpS = 0.44704 # 1 MPH = 0.44704 m/s
+        df['filt_speed_MpS'] = mph2MpS * df['filt_speed']
+        
+        # Get the total speed component with wind (placeholder)
+        df = self._get_wind_velocity_component(df, None)
+        df['total_speed'] = df['filt_speed_MpS'] + df['wind_velocity_component']
+        
+        # Calculate the individual forces
+        df['F_grav'] = params['total_mass']*params['gravity'] * np.sin(df['filt_grade_radians'])
+        df['F_fric'] = params['mu_rr']*params['total_mass']*params['gravity'] * np.cos(df['filt_grade_radians'])
+        full_coefficient = 0.5 * params['rho_air'] * params['area'] * params['c_drag']
+        df['F_drag'] = (full_coefficient) * np.power(df['total_speed'], 2) # k(v)^2
+        
+        # Sum the forces
+        df['F_sum'] = df['F_drag'] + df['F_grav'] + df['F_fric']
+        
+        # Calculate the non-negative power delivered by the ride (set Power=0 for F_sum <0)
+        df['inst_power'] = (1.0/params['eta_dt']) * df['F_sum'] * df['filt_speed_MpS'] 
+        df.loc[df['inst_power']<0,'inst_power'] = 0 # coasting when sum of forces is negative (no input power)
+        
+        # drop the temporary columns
+        cols_to_drop = ['filt_grade_radians','filt_speed_MpS','F_grav','F_fric','F_drag', 'F_sum', 
+                            'total_speed', 'wind_velocity_component']
+        df.drop(cols_to_drop, axis=1, inplace=True)
+
+        self.df = df
+    
+    ################################################################
+    # HELPER METHODS
+    ################################################################
+
+    @staticmethod
+    def _get_wind_velocity_component(df, df_log=None):
+        # TODO: add in weather data and a cosine between wind bearing and bike heading to project the contribution of wind
+        # onto the direction of motion
+        df = df.copy()
+        df['wind_velocity_component'] = 0 # constant zero for now
+        return df
+
+    def _get_bike_weight(self, ride_id):
+        # open the activity log to look up the bike weight
+        df_log = pd.read_csv(self.activity_log_path)
+        # find the bike weight for the ride
+        df_log = df_log.set_index('ride_id')
+        bike_weight = df_log.loc[ride_id, 'bike_weight']
+        return bike_weight
+
+
+
 class BasicEnricher():
     def __init__(self, df):
         self.df = df
