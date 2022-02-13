@@ -53,19 +53,24 @@ class BasicEnricher():
         self.df = self.compute_heading(df=self.df)
 
     def _get_speed(self):
-        pass
+        self.df = self.compute_speed(df=self.df)
 
     def _get_is_cruising(self):
-        pass
+        # Apply the is_cruising check over segment windows to flag state propogation
+        window = PandasWindow(partition_by='segment_id', order_by='time')
+        self.df = window.apply_func(df=self.df, func=self.check_is_cruising)
 
     def _convert_elevation_units(self):
-        pass
+        # We must double check the units of the elevation. 
+        # It does not look like the units displayed on Strava's website, but is most likely in meters
+        meters_to_feet = 3.281
+        self.df['elevation'] = self.df['elevation'] * meters_to_feet
 
     def _get_terrain_grade(self):
-        pass
+        self.df = self.compute_grade(df=self.df)
 
     def _get_elevation_changes(self):
-        pass
+        self.df = self.compute_cumulative_elevation_changes(df=self.df)
 
     def _get_training_window_id(self):
         pass
@@ -116,4 +121,73 @@ class BasicEnricher():
         
         # Remove the old latitude and longitude columns
         df.drop(['lat_old','long_old'], axis=1, inplace=True)
+        return df
+
+    @staticmethod
+    def compute_speed(df):
+        df = df.copy()
+        miles_per_second_2_MPH = 3600.0 / 1.0 # conversion factor
+        df['speed'] = miles_per_second_2_MPH * df['delta_dist'] / df['delta_time']
+        return df
+
+    @staticmethod
+    def check_is_cruising(df, upper_threshold=8, lower_threshold=5):
+        df = df.copy()
+        
+        df['is_cruising'] = False
+        
+        for k in range(1, df.shape[0]):
+            previous_state = df.loc[k-1,'is_cruising']
+            current_speed = df.loc[k,'speed']
+            if (previous_state==False) & (current_speed >= upper_threshold):
+                df.loc[k,'is_cruising'] = True # rising threshold surpassed
+            elif (previous_state==True) & (current_speed < lower_threshold):
+                df.loc[k,'is_cruising'] = False # falling threshold exceeded
+            else:
+                # if there is no change, propogate the previous state
+                df.loc[k,'is_cruising'] = df.loc[k-1,'is_cruising']
+        
+        return df
+
+    @staticmethod
+    def compute_grade(df, fill_first=0.0):
+        df = df.copy()
+        
+        # create an elevation difference
+        feet_to_miles = 1.0 / 5280.0
+        df['delta_ele'] = df['elevation'].diff() * feet_to_miles
+        df['delta_ele'] = df['delta_ele'].fillna(fill_first)
+        
+        # create the grade column as a percent
+        df['grade'] = 100.0 * (df['delta_ele'] / df['delta_dist'])
+        
+        # drop the elevation difference
+        df.drop(['delta_ele'], axis=1, inplace=True)
+        
+        return df
+
+    @staticmethod
+    def compute_cumulative_elevation_changes(df, fill_first=0.0):
+        df = df.copy()
+        
+        # create an elevation difference
+        df['delta_ele'] = df['elevation'].diff()
+        df['delta_ele'] = df['delta_ele'].fillna(fill_first)
+        
+        # create delta ascent and delta descent columns
+        df['delta_ascent'] = df.loc[df['delta_ele']>=0, 'delta_ele']
+        df['delta_descent'] = df.loc[df['delta_ele']<=0, 'delta_ele']
+        
+        # create the cumulative versions
+        df['elapsed_ascent'] = df['delta_ascent'].cumsum()
+        df['elapsed_ascent'] = df['elapsed_ascent'].interpolate() # fill in any blanks
+        df['elapsed_descent'] = df['delta_descent'].cumsum()
+        df['elapsed_descent'] = np.abs(df['elapsed_descent'].interpolate()) # fill in any blanks
+        
+        # create the total elevation change column
+        df['elapsed_elevation'] = df['elapsed_ascent'] + df['elapsed_descent']
+            
+        # drop the elevation differences
+        df.drop(['delta_ele','delta_ascent','delta_descent'], axis=1, inplace=True)
+        
         return df
