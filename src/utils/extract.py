@@ -39,7 +39,7 @@ def get_ride_id(file_path:str)->str:
     """
     # Extract the ride ID from the file_path
     ride_id = file_path.split('/')[-1] # grab the file name from the path
-    ride_id = ride_id.split('.gpx')[0] # grab the ride ID from file name
+    ride_id = ride_id.split('.')[0] # grab the ride ID from file name
 
     return ride_id
 
