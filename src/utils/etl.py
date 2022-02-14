@@ -37,52 +37,95 @@ class LogETL():
 
     def _get_ride_time_endpoints(self):
         # Define the Aggregation function to apply
-
+        def get_time_endpoints(df):
+            start_time = df.loc[0, 'time']
+            end_time = df.loc[df.shape[0]-1, 'time']
+            agg_dict = {'start_time':start_time, 'end_time':end_time}
+            return agg_dict
 
         # Apply the Aggregation
-        self.apply_aggregation(agg_func=function)
+        self.apply_aggregation(agg_func=get_time_endpoints)
 
     def _get_row_segment_counts(self):
         # Define the Aggregation function to apply
-
+        def get_row_segment_counts(df):
+            row_count = df.shape[0]
+            segment_count = len(df['segment_id'].unique())
+            agg_dict = {'row_count':row_count, 'segment_count':segment_count}
+            return agg_dict
 
         # Apply the Aggregation
-        self.apply_aggregation(agg_func=function)
+        self.apply_aggregation(agg_func=get_row_segment_counts)
 
     def _get_elapsed_durations(self):
         # Define the Aggregation function to apply
-
+        def get_durations(df):
+            last_row = df.shape[0]-1
+            elapsed_time = df.loc[last_row, 'elapsed_time']
+            moving_time = df.loc[last_row, 'moving_time'] 
+            elapsed_distance = df['delta_dist'].cumsum().iloc[last_row]
+            elapsed_ascent = df.loc[last_row, 'elapsed_ascent']
+            elapsed_descent = df.loc[last_row, 'elapsed_descent']
+            elapsed_elevation = df.loc[last_row, 'elapsed_elevation']
+            
+            agg_dict = {'ride_elapsed_time':elapsed_time, 'ride_moving_time':moving_time, 'elapsed_distance':elapsed_distance, 
+                        'elapsed_ascent':elapsed_ascent, 'elapsed_descent':elapsed_descent, 'elapsed_elevation':elapsed_elevation}
+            return agg_dict
 
         # Apply the Aggregation
-        self.apply_aggregation(agg_func=function)
+        self.apply_aggregation(agg_func=get_durations)
 
     def _get_speed_summary(self):
         # Define the Aggregation function to apply
-
+        def get_speed_summary(df):
+            ride_avg_speed =  np.mean(df.loc[:, 'speed'])
+            
+            filt_cruising = df.loc[:,'is_cruising']==True
+            ride_cruise_speed = np.mean(df.loc[filt_cruising, 'speed'])
+            
+            ride_max_speed = np.max(df.loc[:, 'filt_speed'])
+            
+            agg_dict = {'ride_avg_speed':ride_avg_speed, 'ride_cruise_speed':ride_cruise_speed, 'ride_max_speed':ride_max_speed}
+            return agg_dict
 
         # Apply the Aggregation
-        self.apply_aggregation(agg_func=function)
+        self.apply_aggregation(agg_func=get_speed_summary)
 
     def _get_training_window(self):
         # Define the Aggregation function to apply
-
+        def get_training_window_id(df):
+            training_window_id =  df.loc[0, 'training_window_id']
+            
+            agg_dict = {'training_window_id':training_window_id}
+            return agg_dict
 
         # Apply the Aggregation
-        self.apply_aggregation(agg_func=function)
+        self.apply_aggregation(agg_func=get_training_window_id)
 
     def _get_basic_power_summary(self):
         # Define the Aggregation function to apply
-
+        def get_basic_power_summary(df):
+            ride_avg_power = np.mean(df.loc[:, 'inst_power'])    
+            ride_max_power = np.max(df.loc[:, 'inst_power'])
+            
+            agg_dict = {'ride_avg_power':ride_avg_power, 'ride_max_power':ride_max_power}
+            return agg_dict
 
         # Apply the Aggregation
-        self.apply_aggregation(agg_func=function)
+        self.apply_aggregation(agg_func=get_basic_power_summary)
 
     def _get_power_ftp(self):
         # Define the Aggregation function to apply
-
+        def get_power_ftp(df):
+            # 1200 corresponds to 1200 samples at 1 sec/sample for 20 minutes
+            power_window = df['inst_power'].rolling(window=1200).mean()
+            peak_20min_power = np.max(power_window)
+            
+            agg_dict = {'peak_20min_power':peak_20min_power}
+            return agg_dict
 
         # Apply the Aggregation
-        self.apply_aggregation(agg_func=function)
+        self.apply_aggregation(agg_func=get_power_ftp)
 
     ############################################################################################
     # HELPERS
