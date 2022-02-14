@@ -10,6 +10,60 @@ from utils.transform.enrich import *
 from utils.transform.convert import *
 from utils.transform.normalize import *
 
+class LogETL():
+    def __init__(self):
+        self.config = Config()
+        self.ride_files = None
+        self.df_log = None
+
+    def run_pipeline(self):
+        self.load_ride_file_paths()
+        self.load_activity_log()
+
+    ############################################################################################
+    # AGGREGATE
+    ############################################################################################
+
+
+
+    ############################################################################################
+    # HELPERS
+    ############################################################################################
+    def load_ride_file_paths(self):
+        input_rides_path = self.config.cleaned_ride_path
+        ride_files = listdir(input_rides_path) # get all files and directories
+        ride_files = [join(input_rides_path, f) for f in ride_files if f != '.gitignore'] # add full paths to files
+        ride_files = [f for f in ride_files if isfile(f)] # get only files, no directories
+        self.ride_files = ride_files
+
+    def load_activity_log(self):
+        log_path = self.config.activity_log_path
+        self.df_log = pd.read_csv(log_path)
+        self.df_log = self.df_log.set_index('ride_id')
+    
+    def apply_aggregation(self, agg_func):
+        # Initialize the Aggregation results list
+        agg_results = []
+
+        # Run the Aggregation over each Ride File
+        for ride_file in tqdm(self.ride_files):
+            # Read the Ride File
+            df = read_ride_csv(ride_file)
+
+            # Apply the Aggregation
+            agg_dict = agg_func(df)
+            ride_id = get_ride_id(ride_file)
+            agg_dict['ride_id'] = ride_id
+
+            # Append the results
+            agg_results.append(agg_dict)
+
+        # Created aggregation results dataframe
+        df_agg = pd.DataFrame(data=agg_results)
+
+            
+
+
 class RideETL():
     def __init__(self):
         self.config = Config()

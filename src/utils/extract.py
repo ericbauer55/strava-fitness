@@ -43,7 +43,7 @@ def get_ride_id(file_path:str)->str:
 
     return ride_id
 
-def read_ride_csv(file_path:str)->pd.DataFrame:
+def read_ride_csv(file_path:str, time_columns=['time'])->pd.DataFrame:
     """
     This function loads in a ride's data from .CSV given a file path as a dataframe
 
@@ -54,6 +54,7 @@ def read_ride_csv(file_path:str)->pd.DataFrame:
     df = pd.read_csv(file_path)
     
     # guarantee the timestamps are datetime objects
-    df['time'] = pd.to_datetime(df['time'])
+    for time_col in time_columns:
+        df[time_col] = pd.to_datetime(df[time_col])
 
     return df
