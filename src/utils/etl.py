@@ -29,31 +29,60 @@ class LogETL():
         self._get_basic_power_summary()
         self._get_power_ftp()
         # Save Enriched Activity Log
+        self.save_activity_log()
 
     ############################################################################################
     # AGGREGATE
     ############################################################################################
 
     def _get_ride_time_endpoints(self):
-        pass
+        # Define the Aggregation function to apply
+
+
+        # Apply the Aggregation
+        self.apply_aggregation(agg_func=function)
 
     def _get_row_segment_counts(self):
-        pass
+        # Define the Aggregation function to apply
+
+
+        # Apply the Aggregation
+        self.apply_aggregation(agg_func=function)
 
     def _get_elapsed_durations(self):
-        pass
+        # Define the Aggregation function to apply
+
+
+        # Apply the Aggregation
+        self.apply_aggregation(agg_func=function)
 
     def _get_speed_summary(self):
-        pass
+        # Define the Aggregation function to apply
+
+
+        # Apply the Aggregation
+        self.apply_aggregation(agg_func=function)
 
     def _get_training_window(self):
-        pass
+        # Define the Aggregation function to apply
+
+
+        # Apply the Aggregation
+        self.apply_aggregation(agg_func=function)
 
     def _get_basic_power_summary(self):
-        pass
+        # Define the Aggregation function to apply
+
+
+        # Apply the Aggregation
+        self.apply_aggregation(agg_func=function)
 
     def _get_power_ftp(self):
-        pass
+        # Define the Aggregation function to apply
+
+
+        # Apply the Aggregation
+        self.apply_aggregation(agg_func=function)
 
     ############################################################################################
     # HELPERS
