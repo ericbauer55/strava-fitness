@@ -17,14 +17,43 @@ class LogETL():
         self.df_log = None
 
     def run_pipeline(self):
+        # Load Data
         self.load_ride_file_paths()
         self.load_activity_log()
+        # Apply Aggregations
+        self._get_ride_time_endpoints()
+        self._get_row_segment_counts()
+        self._get_elapsed_durations()
+        self._get_speed_summary()
+        self._get_training_window()
+        self._get_basic_power_summary()
+        self._get_power_ftp()
+        # Save Enriched Activity Log
 
     ############################################################################################
     # AGGREGATE
     ############################################################################################
 
+    def _get_ride_time_endpoints(self):
+        pass
 
+    def _get_row_segment_counts(self):
+        pass
+
+    def _get_elapsed_durations(self):
+        pass
+
+    def _get_speed_summary(self):
+        pass
+
+    def _get_training_window(self):
+        pass
+
+    def _get_basic_power_summary(self):
+        pass
+
+    def _get_power_ftp(self):
+        pass
 
     ############################################################################################
     # HELPERS
@@ -40,6 +69,10 @@ class LogETL():
         log_path = self.config.activity_log_path
         self.df_log = pd.read_csv(log_path)
         #self.df_log = self.df_log.set_index('ride_id')
+
+    def save_activity_log(self):
+        enriched_log_path = self.config.enriched_activity_log_path
+        self.df_log.to_csv(enriched_log_path, index=False)
     
     def apply_aggregation(self, agg_func):
         # Initialize the Aggregation results list

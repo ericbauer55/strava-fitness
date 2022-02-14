@@ -29,6 +29,10 @@ class Config():
         return join(self.root_dir, 'data/processed/activity_log.csv')
 
     @property
+    def enriched_activity_log_path(self):
+        return join(self.root_dir, 'data/cleaned/activity_log.csv')
+
+    @property
     def privacy_zone_path(self):
         # NOTE: this directory is in .gitignore
         return join(self.root_dir, 'data/cleaned/privacy/privacy_zones.csv')
