@@ -39,7 +39,7 @@ class LogETL():
     def load_activity_log(self):
         log_path = self.config.activity_log_path
         self.df_log = pd.read_csv(log_path)
-        self.df_log = self.df_log.set_index('ride_id')
+        #self.df_log = self.df_log.set_index('ride_id')
     
     def apply_aggregation(self, agg_func):
         # Initialize the Aggregation results list
@@ -60,6 +60,8 @@ class LogETL():
 
         # Created aggregation results dataframe
         df_agg = pd.DataFrame(data=agg_results)
+
+        self.df_log = self.df_log.merge(df_agg, on='ride_id', how='inner')
 
             
 
