@@ -150,6 +150,8 @@ class LogETL():
         # Initialize the Aggregation results list
         agg_results = []
 
+        function_name = agg_func.__name__
+        print(f'Applying the "{function_name}" aggregation across {len(self.ride_files)} CSV ride files.')
         # Run the Aggregation over each Ride File
         for ride_file in tqdm(self.ride_files):
             # Read the Ride File
