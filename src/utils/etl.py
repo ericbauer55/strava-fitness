@@ -160,7 +160,7 @@ class LogETL():
             # Apply the Aggregation
             agg_dict = agg_func(df)
             ride_id = get_ride_id(ride_file)
-            agg_dict['ride_id'] = ride_id
+            agg_dict['ride_id'] = int(ride_id)
 
             # Append the results
             agg_results.append(agg_dict)
