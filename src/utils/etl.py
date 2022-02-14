@@ -10,6 +10,169 @@ from utils.transform.enrich import *
 from utils.transform.convert import *
 from utils.transform.normalize import *
 
+class LogETL():
+    def __init__(self):
+        self.config = Config()
+        self.ride_files = None
+        self.df_log = None
+
+    def run_pipeline(self):
+        # Load Data
+        self.load_ride_file_paths()
+        self.load_activity_log()
+        # Apply Aggregations
+        self._get_ride_time_endpoints()
+        self._get_row_segment_counts()
+        self._get_elapsed_durations()
+        self._get_speed_summary()
+        self._get_training_window()
+        self._get_basic_power_summary()
+        self._get_power_ftp()
+        # Save Enriched Activity Log
+        self.save_activity_log()
+
+    ############################################################################################
+    # AGGREGATE
+    ############################################################################################
+
+    def _get_ride_time_endpoints(self):
+        # Define the Aggregation function to apply
+        def get_time_endpoints(df):
+            start_time = df.loc[0, 'time']
+            end_time = df.loc[df.shape[0]-1, 'time']
+            agg_dict = {'start_time':start_time, 'end_time':end_time}
+            return agg_dict
+
+        # Apply the Aggregation
+        self.apply_aggregation(agg_func=get_time_endpoints)
+
+    def _get_row_segment_counts(self):
+        # Define the Aggregation function to apply
+        def get_row_segment_counts(df):
+            row_count = df.shape[0]
+            segment_count = len(df['segment_id'].unique())
+            agg_dict = {'row_count':row_count, 'segment_count':segment_count}
+            return agg_dict
+
+        # Apply the Aggregation
+        self.apply_aggregation(agg_func=get_row_segment_counts)
+
+    def _get_elapsed_durations(self):
+        # Define the Aggregation function to apply
+        def get_durations(df):
+            last_row = df.shape[0]-1
+            elapsed_time = df.loc[last_row, 'elapsed_time']
+            moving_time = df.loc[last_row, 'moving_time'] 
+            elapsed_distance = df['delta_dist'].cumsum().iloc[last_row]
+            elapsed_ascent = df.loc[last_row, 'elapsed_ascent']
+            elapsed_descent = df.loc[last_row, 'elapsed_descent']
+            elapsed_elevation = df.loc[last_row, 'elapsed_elevation']
+            
+            agg_dict = {'ride_elapsed_time':elapsed_time, 'ride_moving_time':moving_time, 'elapsed_distance':elapsed_distance, 
+                        'elapsed_ascent':elapsed_ascent, 'elapsed_descent':elapsed_descent, 'elapsed_elevation':elapsed_elevation}
+            return agg_dict
+
+        # Apply the Aggregation
+        self.apply_aggregation(agg_func=get_durations)
+
+    def _get_speed_summary(self):
+        # Define the Aggregation function to apply
+        def get_speed_summary(df):
+            ride_avg_speed =  np.mean(df.loc[:, 'speed'])
+            
+            filt_cruising = df.loc[:,'is_cruising']==True
+            ride_cruise_speed = np.mean(df.loc[filt_cruising, 'speed'])
+            
+            ride_max_speed = np.max(df.loc[:, 'filt_speed'])
+            
+            agg_dict = {'ride_avg_speed':ride_avg_speed, 'ride_cruise_speed':ride_cruise_speed, 'ride_max_speed':ride_max_speed}
+            return agg_dict
+
+        # Apply the Aggregation
+        self.apply_aggregation(agg_func=get_speed_summary)
+
+    def _get_training_window(self):
+        # Define the Aggregation function to apply
+        def get_training_window_id(df):
+            training_window_id =  df.loc[0, 'training_window_id']
+            
+            agg_dict = {'training_window_id':training_window_id}
+            return agg_dict
+
+        # Apply the Aggregation
+        self.apply_aggregation(agg_func=get_training_window_id)
+
+    def _get_basic_power_summary(self):
+        # Define the Aggregation function to apply
+        def get_basic_power_summary(df):
+            ride_avg_power = np.mean(df.loc[:, 'inst_power'])    
+            ride_max_power = np.max(df.loc[:, 'inst_power'])
+            
+            agg_dict = {'ride_avg_power':ride_avg_power, 'ride_max_power':ride_max_power}
+            return agg_dict
+
+        # Apply the Aggregation
+        self.apply_aggregation(agg_func=get_basic_power_summary)
+
+    def _get_power_ftp(self):
+        # Define the Aggregation function to apply
+        def get_power_ftp(df):
+            # 1200 corresponds to 1200 samples at 1 sec/sample for 20 minutes
+            power_window = df['inst_power'].rolling(window=1200).mean()
+            peak_20min_power = np.max(power_window)
+            
+            agg_dict = {'peak_20min_power':peak_20min_power}
+            return agg_dict
+
+        # Apply the Aggregation
+        self.apply_aggregation(agg_func=get_power_ftp)
+
+    ############################################################################################
+    # HELPERS
+    ############################################################################################
+    def load_ride_file_paths(self):
+        input_rides_path = self.config.cleaned_ride_path
+        ride_files = listdir(input_rides_path) # get all files and directories
+        ride_files = [join(input_rides_path, f) for f in ride_files if f != '.gitignore'] # add full paths to files
+        ride_files = [f for f in ride_files if isfile(f)] # get only files, no directories
+        self.ride_files = ride_files
+
+    def load_activity_log(self):
+        log_path = self.config.activity_log_path
+        self.df_log = pd.read_csv(log_path)
+        #self.df_log = self.df_log.set_index('ride_id')
+
+    def save_activity_log(self):
+        enriched_log_path = self.config.enriched_activity_log_path
+        self.df_log.to_csv(enriched_log_path, index=False)
+    
+    def apply_aggregation(self, agg_func):
+        # Initialize the Aggregation results list
+        agg_results = []
+
+        function_name = agg_func.__name__
+        print(f'Applying the "{function_name}" aggregation across {len(self.ride_files)} CSV ride files.')
+        # Run the Aggregation over each Ride File
+        for ride_file in tqdm(self.ride_files):
+            # Read the Ride File
+            df = read_ride_csv(ride_file)
+
+            # Apply the Aggregation
+            agg_dict = agg_func(df)
+            ride_id = get_ride_id(ride_file)
+            agg_dict['ride_id'] = int(ride_id)
+
+            # Append the results
+            agg_results.append(agg_dict)
+
+        # Created aggregation results dataframe
+        df_agg = pd.DataFrame(data=agg_results)
+
+        self.df_log = self.df_log.merge(df_agg, on='ride_id', how='inner')
+
+            
+
+
 class RideETL():
     def __init__(self):
         self.config = Config()
